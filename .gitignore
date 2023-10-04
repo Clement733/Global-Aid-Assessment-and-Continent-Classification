@@ -1,6 +1,0 @@
-*.csv
-venv
-*.pyc
-*.DS_Store
-*.env
-.gitignore
