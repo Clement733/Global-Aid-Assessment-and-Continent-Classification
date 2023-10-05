@@ -39,7 +39,10 @@ def assign_continent(country):
         return "Oceania"
     return "Asia"
 
-df['continent'] = df['country'].apply(assign_continent)
+df['Continent'] = df['country'].apply(assign_continent)
+df.rename(columns={'child_mort': 'Child Mortality', 'exports':'Exports', 'health': 'Health Quality', 'imports': 'Imports',
+                   'income': 'Income', 'inflation': 'Inflation', 'life_expec': 'Life expectancy', 'total_fer': 'Total Fertility',
+                   'gdpp': 'GDP per Capital'}, inplace=True)
 
 dropdown_options_first = [{'label': country, 'value': country} for country in df['country'].unique()]
 dropdown_options_second = [{'label': col, 'value': col} for col in df.columns]
@@ -58,7 +61,7 @@ app.layout = html.Div([
     dcc.Dropdown(
         id='dropdown_parameter',
         options=dropdown_options_second,
-        value='gdpp',
+        value='GDP per Capital',
         clearable=False
     ),
     dcc.Graph(id='pie')
@@ -70,17 +73,17 @@ app.layout = html.Div([
     Input("dropdown_country", "value"))
 def update_bar_chart(selected_countries):
     mask = df["country"].isin(selected_countries)
-    fig = px.bar(df[mask], x="country", y="child_mort",
-                 color="gdpp", barmode="group", title='Child Mortality vs GDPP by Country',
-                 labels={'country': "Countries", 'child_mort': 'Child Mortality'})
+    fig = px.bar(df[mask], x="country", y="Child Mortality",
+                 color="GDP per Capital", barmode="group", title='Child Mortality vs GDPP by Country',
+                 labels={'country': "Countries"})
     return fig
 
 @app.callback(
     Output("pie", "figure"),
     Input('dropdown_parameter', 'value'))
 def update_pie_chart(dropdown_parameter):
-    new_df = df.groupby('continent')[dropdown_parameter].mean().reset_index()
-    fig = px.pie(new_df, names='continent', values=dropdown_parameter, hole=.3, title=f'Mean {dropdown_parameter} per Continent')
+    new_df = df.groupby('Continent')[dropdown_parameter].mean().reset_index()
+    fig = px.pie(new_df, names='Continent', values=dropdown_parameter, hole=.3, title=f'Mean {dropdown_parameter} per Continent')
     return fig
 
 
