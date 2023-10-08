@@ -1,6 +1,9 @@
 from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
+from sklearn.preprocessing import RobustScaler
+from sklearn.cluster import KMeans
+from mpl_toolkits.mplot3d import Axes3D
 
 app = Dash(__name__)
 df = pd.read_csv('Country-data.csv')
@@ -47,6 +50,9 @@ df.rename(columns={'child_mort': 'Child Mortality', 'exports':'Exports', 'health
 dropdown_options_first = [{'label': country, 'value': country} for country in df['country'].unique()]
 dropdown_options_second = [{'label': col, 'value': col} for col in df.columns]
 
+df_num = df.drop(columns=["country", 'Continent'])
+df_num_scaled = RobustScaler().fit_transform(df_num)
+
 app.layout = html.Div([
     html.H4('Select Countries to see correlation between Child Mortality and GDPP'),
     dcc.Dropdown(
@@ -64,7 +70,32 @@ app.layout = html.Div([
         value='GDP per Capital',
         clearable=False
     ),
-    dcc.Graph(id='pie')
+    dcc.Graph(id='pie'),
+    html.H4("Select number of clusters for KMeans elbow plot"),
+    html.P("Number of clusters:"),
+    dcc.Dropdown(
+        id='cluster_number',
+        options=[{'label': str(i), 'value': i} for i in range(1, 20)],
+        value=1,
+        clearable=False
+    ),
+    dcc.Graph(id='plot'),
+    html.H4("Select number of clusters for KMeans plotting"),
+    html.P("Number of clusters:"),
+    dcc.Dropdown(
+        id="number_cluster",
+        options=[{'label': str(i), 'value': i} for i in range(1,20)],
+        value=1,
+        clearable=False
+    ),
+    html.P("Number of iterations:"),
+    dcc.Dropdown(
+        id="max_iter",
+        options=[{'label': str(i), 'value': i} for i in range(1, 1001)],
+        value=300,
+        clearable=False
+    ),
+    dcc.Graph(id='scatter')
 ])
 
 
@@ -84,6 +115,40 @@ def update_bar_chart(selected_countries):
 def update_pie_chart(dropdown_parameter):
     new_df = df.groupby('Continent')[dropdown_parameter].mean().reset_index()
     fig = px.pie(new_df, names='Continent', values=dropdown_parameter, hole=.3, title=f'Mean {dropdown_parameter} per Continent')
+    return fig
+
+@app.callback(
+    Output('plot', 'figure'),
+    Input('cluster_number', 'value'))
+def elbow_method(number):
+    sse = []
+    for k in range(1, number + 1):
+        kmeans = KMeans(n_clusters=k)
+        kmeans.fit(df_num_scaled)
+        sse.append(kmeans.inertia_)
+
+    fig = px.line(x=range(1, number + 1), y=sse, title="Elbow Method for Optimal K")
+    fig.update_xaxes(title="Number of Clusters")
+    fig.update_yaxes(title="SSE")
+    return fig
+
+@app.callback(
+    Output('scatter', 'figure'),
+    Input('number_cluster', 'value'),
+    Input('max_iter', 'value'))
+def scatter_3D(number, max_iter):
+    kmeans = KMeans(n_clusters=number, max_iter=max_iter, random_state=1)
+    kmeans.fit(df_num_scaled)
+    labels = kmeans.predict(df_num)
+    centroids = kmeans.cluster_centers_
+    df_num['Cluster'] = labels
+    fig = px.scatter_3d(df_num,
+                        x='Child Mortality',
+                        y='Exports',
+                        z='Health Quality',
+                        color='Cluster',
+                        title='Interactive 3D Scatter Plot'
+                    )
     return fig
 
 
