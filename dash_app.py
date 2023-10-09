@@ -50,9 +50,6 @@ df.rename(columns={'child_mort': 'Child Mortality', 'exports':'Exports', 'health
 dropdown_options_first = [{'label': country, 'value': country} for country in df['country'].unique()]
 dropdown_options_second = [{'label': col, 'value': col} for col in df.columns]
 
-df_num = df.drop(columns=["country", 'Continent'])
-df_num_scaled = RobustScaler().fit_transform(df_num)
-
 app.layout = html.Div([
     html.H4('Select Countries to see correlation between Child Mortality and GDPP'),
     dcc.Dropdown(
@@ -84,18 +81,19 @@ app.layout = html.Div([
     html.P("Number of clusters:"),
     dcc.Dropdown(
         id="number_cluster",
-        options=[{'label': str(i), 'value': i} for i in range(1,20)],
-        value=1,
+        options=[{'label': str(i), 'value': i} for i in range(1,21)],
+        value=3,
         clearable=False
     ),
     html.P("Number of iterations:"),
     dcc.Dropdown(
         id="max_iter",
-        options=[{'label': str(i), 'value': i} for i in range(1, 1001)],
+        options=[{'label': str(i), 'value': i} for i in range(1, 501)],
         value=300,
         clearable=False
     ),
-    dcc.Graph(id='scatter')
+    dcc.Graph(id='scatter',
+              style={'height': '800px', 'width': '100%'})
 ])
 
 
@@ -121,6 +119,8 @@ def update_pie_chart(dropdown_parameter):
     Output('plot', 'figure'),
     Input('cluster_number', 'value'))
 def elbow_method(number):
+    df_num = df.drop(columns=["country", 'Continent'])
+    df_num_scaled = RobustScaler().fit_transform(df_num)
     sse = []
     for k in range(1, number + 1):
         kmeans = KMeans(n_clusters=k)
@@ -137,14 +137,15 @@ def elbow_method(number):
     Input('number_cluster', 'value'),
     Input('max_iter', 'value'))
 def scatter_3D(number, max_iter):
+    df_num = df.drop(columns=["country", 'Continent'])
+    df_num_scaled = RobustScaler().fit_transform(df_num)
     kmeans = KMeans(n_clusters=number, max_iter=max_iter, random_state=1)
     kmeans.fit(df_num_scaled)
-    labels = kmeans.predict(df_num)
-    centroids = kmeans.cluster_centers_
+    labels = kmeans.labels_
     df_num['Cluster'] = labels
     fig = px.scatter_3d(df_num,
-                        x='Child Mortality',
-                        y='Exports',
+                        x='Income',
+                        y='GDP per Capital',
                         z='Health Quality',
                         color='Cluster',
                         title='Interactive 3D Scatter Plot'
