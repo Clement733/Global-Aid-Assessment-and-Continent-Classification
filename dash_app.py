@@ -68,32 +68,39 @@ app.layout = html.Div([
         clearable=False
     ),
     dcc.Graph(id='pie'),
-    html.H4("Select number of clusters for KMeans elbow plot"),
-    html.P("Number of clusters:"),
+    html.H4("3D Plot representing features meaningful in clustering"),
+    html.P('You can change the number of clusters to see the differences:'),
     dcc.Dropdown(
         id='cluster_number',
-        options=[{'label': str(i), 'value': i} for i in range(1, 20)],
-        value=1,
-        clearable=False
-    ),
-    dcc.Graph(id='plot'),
-    html.H4("Select number of clusters for KMeans plotting"),
-    html.P("Number of clusters:"),
-    dcc.Dropdown(
-        id="number_cluster",
-        options=[{'label': str(i), 'value': i} for i in range(1,21)],
-        value=3,
-        clearable=False
-    ),
-    html.P("Number of iterations:"),
-    dcc.Dropdown(
-        id="max_iter",
-        options=[{'label': str(i), 'value': i} for i in range(1, 501)],
-        value=300,
+        options=[{'label': str(i), 'value': i} for i in range(1,10)],
+        value=2,
         clearable=False
     ),
     dcc.Graph(id='scatter',
-              style={'height': '800px', 'width': '100%'})
+              style={'height': '600px', 'width': '1500px'}),
+
+    html.H3("Although I don't recommend, you can change the plotting features here"),
+    html.P('The x-axis feature here:'),
+    dcc.Dropdown(
+        id='x_axis',
+        options = dropdown_options_second,
+        value = 'Income',
+        clearable=False
+    ),
+    html.P('The y-axis feature here:'),
+    dcc.Dropdown(
+        id='y_axis',
+        options = dropdown_options_second,
+        value = 'GDP per Capital',
+        clearable=False
+    ),
+    html.P('The z-axis feature here:'),
+    dcc.Dropdown(
+        id='z_axis',
+        options = dropdown_options_second,
+        value = 'Health Quality',
+        clearable=False
+    )
 ])
 
 
@@ -116,39 +123,29 @@ def update_pie_chart(dropdown_parameter):
     return fig
 
 @app.callback(
-    Output('plot', 'figure'),
-    Input('cluster_number', 'value'))
-def elbow_method(number):
-    df_num = df.drop(columns=["country", 'Continent'])
-    df_num_scaled = RobustScaler().fit_transform(df_num)
-    sse = []
-    for k in range(1, number + 1):
-        kmeans = KMeans(n_clusters=k)
-        kmeans.fit(df_num_scaled)
-        sse.append(kmeans.inertia_)
-
-    fig = px.line(x=range(1, number + 1), y=sse, title="Elbow Method for Optimal K")
-    fig.update_xaxes(title="Number of Clusters")
-    fig.update_yaxes(title="SSE")
-    return fig
-
-@app.callback(
     Output('scatter', 'figure'),
-    Input('number_cluster', 'value'),
-    Input('max_iter', 'value'))
-def scatter_3D(number, max_iter):
-    df_num = df.drop(columns=["country", 'Continent'])
+    Input('cluster_number', 'value'),
+    Input('x_axis', 'value'),
+    Input('y_axis', 'value'),
+    Input('z_axis', 'value'))
+def scatter_model(cluster_number, x_axis, y_axis, z_axis):
+    df_num = df.copy()
+    df_num.set_index('country', inplace=True)
+    print(df_num.head())
+    df_num.drop(columns=['Continent'], inplace=True)
     df_num_scaled = RobustScaler().fit_transform(df_num)
-    kmeans = KMeans(n_clusters=number, max_iter=max_iter, random_state=1)
+    kmeans = KMeans(n_clusters=cluster_number, max_iter=300, random_state=1)
     kmeans.fit(df_num_scaled)
     labels = kmeans.labels_
     df_num['Cluster'] = labels
+    df_num['Index'] = df_num.index
     fig = px.scatter_3d(df_num,
-                        x='Income',
-                        y='GDP per Capital',
-                        z='Health Quality',
+                        x=x_axis,
+                        y=y_axis,
+                        z=z_axis,
                         color='Cluster',
-                        title='Interactive 3D Scatter Plot'
+                        hover_data=['Index'],
+                        title='Interactive KMeans 3D Scatter Plot'
                     )
     return fig
 
