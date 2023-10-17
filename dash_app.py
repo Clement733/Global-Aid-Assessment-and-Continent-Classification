@@ -4,6 +4,8 @@ import pandas as pd
 from sklearn.preprocessing import RobustScaler
 from sklearn.cluster import KMeans
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+from plotly.subplots import make_subplots
 
 app = Dash(__name__)
 df = pd.read_csv('Country-data.csv')
@@ -42,23 +44,25 @@ def assign_continent(country):
         return "Oceania"
     return "Asia"
 
-df['Continent'] = df['country'].apply(assign_continent)
 df.rename(columns={'child_mort': 'Child Mortality', 'exports':'Exports', 'health': 'Health Quality', 'imports': 'Imports',
                    'income': 'Income', 'inflation': 'Inflation', 'life_expec': 'Life expectancy', 'total_fer': 'Total Fertility',
                    'gdpp': 'GDP per Capital'}, inplace=True)
 
-dropdown_options_first = [{'label': country, 'value': country} for country in df['country'].unique()]
+drop_options = [{'label': col, 'value': col} for col in df[['Child Mortality', 'Exports', 'Health Quality',
+                                                           'Imports', 'Income', 'Inflation', 'Life expectancy', 'Total Fertility',
+                                                           'GDP per Capital']]]
 dropdown_options_second = [{'label': col, 'value': col} for col in df.columns]
 
 app.layout = html.Div([
-    html.H4('Select Countries to see correlation between Child Mortality and GDPP'),
+    html.H4('Select feature you would like to see the first 5, middle 5, and last 5 countries'),
     dcc.Dropdown(
-        id="dropdown_country",
-        options=dropdown_options_first,
-        value=["Fri"],
-        multi=True,
+        id="selected_feature",
+        options=drop_options,
+        value='Child Mortality',
+        clearable=False,
     ),
     dcc.Graph(id="bar"),
+
     html.H4("Select parameter you would like to compare continents through"),
     html.P('Parameter:'),
     dcc.Dropdown(
@@ -68,6 +72,7 @@ app.layout = html.Div([
         clearable=False
     ),
     dcc.Graph(id='pie'),
+
     html.H4("3D Plot representing features meaningful in clustering"),
     html.P('You can change the number of clusters to see the differences:'),
     dcc.Dropdown(
@@ -106,18 +111,38 @@ app.layout = html.Div([
 
 @app.callback(
     Output("bar", "figure"),
-    Input("dropdown_country", "value"))
-def update_bar_chart(selected_countries):
-    mask = df["country"].isin(selected_countries)
-    fig = px.bar(df[mask], x="country", y="Child Mortality",
-                 color="GDP per Capital", barmode="group", title='Child Mortality vs GDPP by Country',
-                 labels={'country': "Countries"})
+    Input("selected_feature", "value"))
+def update_bar_chart(selected_feature):
+    sorted_df = df.sort_values(by=[selected_feature], ascending=False)
+
+    fig = make_subplots(rows=1, cols=3, subplot_titles=[
+        f'Top 5 {selected_feature}',
+        f'Middle 5 {selected_feature}',
+        f'Bottom 5 {selected_feature}'
+    ])
+
+    for i, subset in enumerate([sorted_df.head(5), sorted_df.iloc[80:85], sorted_df.tail(5)]):
+        chart = px.bar(
+            subset,
+            x='country',
+            y=selected_feature,
+            labels={'country': 'Countries', selected_feature: selected_feature},
+        )
+        for trace in chart.data:
+            fig.add_trace(trace, row=1, col=i+1)
+
+    fig.update_layout(
+        title='Comparison of Top, Middle, and Bottom 5 Countries',
+        showlegend=False,
+    )
+
     return fig
 
 @app.callback(
     Output("pie", "figure"),
     Input('dropdown_parameter', 'value'))
 def update_pie_chart(dropdown_parameter):
+    df['Continent'] = df['country'].apply(assign_continent)
     new_df = df.groupby('Continent')[dropdown_parameter].mean().reset_index()
     fig = px.pie(new_df, names='Continent', values=dropdown_parameter, hole=.3, title=f'Mean {dropdown_parameter} per Continent')
     return fig
@@ -131,8 +156,6 @@ def update_pie_chart(dropdown_parameter):
 def scatter_model(cluster_number, x_axis, y_axis, z_axis):
     df_num = df.copy()
     df_num.set_index('country', inplace=True)
-    print(df_num.head())
-    df_num.drop(columns=['Continent'], inplace=True)
     df_num_scaled = RobustScaler().fit_transform(df_num)
     kmeans = KMeans(n_clusters=cluster_number, max_iter=300, random_state=1)
     kmeans.fit(df_num_scaled)
