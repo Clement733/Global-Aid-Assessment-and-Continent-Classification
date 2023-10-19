@@ -1,7 +1,7 @@
 from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import MinMaxScaler
 from sklearn.cluster import KMeans
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
@@ -156,7 +156,7 @@ def update_pie_chart(dropdown_parameter):
 def scatter_model(cluster_number, x_axis, y_axis, z_axis):
     df_num = df.copy()
     df_num.set_index('country', inplace=True)
-    df_num_scaled = RobustScaler().fit_transform(df_num)
+    df_num_scaled = MinMaxScaler().fit_transform(df_num)
     kmeans = KMeans(n_clusters=cluster_number, max_iter=300, random_state=1)
     kmeans.fit(df_num_scaled)
     labels = kmeans.labels_
