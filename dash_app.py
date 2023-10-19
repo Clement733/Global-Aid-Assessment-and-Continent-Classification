@@ -25,13 +25,6 @@ def assign_continent(country):
     south_america = ["Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador", "Guyana", "Paraguay", "Peru", "Suriname",
     "Uruguay", "Venezuela"]
     oceania = ["Australia", "Fiji", "Kiribati", "Micronesia, Fed. Sts.", "New Zealand", "Samoa", "Solomon Islands", "Tonga", "Vanuatu"]
-    asia=['Afghanistan', 'Armenia', 'Azerbaijan', 'Bahrain', 'Bangladesh', 'Bhutan', 'Brunei', 'Cambodia', 'China', 'Georgia', 'India',
-        'Indonesia', 'Iran', 'Iraq', 'Israel', 'Japan', 'Jordan', 'Kazakhstan',
-        'Kuwait', 'Kyrgyz Republic', 'Lao', 'Lebanon', 'Malaysia', 'Maldives',
-        'Mongolia', 'Myanmar', 'Namibia', 'Nepal', 'Oman', 'Pakistan',
-        'Philippines', 'Qatar', 'Saudi Arabia', 'Singapore', 'South Korea',
-        'Sri Lanka', 'Tajikistan', 'Thailand', 'Timor-Leste', 'Turkmenistan',
-        'United Arab Emirates', 'Uzbekistan', 'Vietnam', 'Yemen']
     if country in africa:
         return "Africa"
     elif country in europe:
@@ -52,6 +45,10 @@ drop_options = [{'label': col, 'value': col} for col in df[['Child Mortality', '
                                                            'Imports', 'Income', 'Inflation', 'Life expectancy', 'Total Fertility',
                                                            'GDP per Capital']]]
 dropdown_options_second = [{'label': col, 'value': col} for col in df.columns]
+
+df_num = df.copy()
+df_num.set_index('country', inplace=True)
+df_num_scaled = MinMaxScaler().fit_transform(df_num)
 
 app.layout = html.Div([
     html.H4('Select feature you would like to see the first 5, middle 5, and last 5 countries'),
@@ -154,9 +151,6 @@ def update_pie_chart(dropdown_parameter):
     Input('y_axis', 'value'),
     Input('z_axis', 'value'))
 def scatter_model(cluster_number, x_axis, y_axis, z_axis):
-    df_num = df.copy()
-    df_num.set_index('country', inplace=True)
-    df_num_scaled = MinMaxScaler().fit_transform(df_num)
     kmeans = KMeans(n_clusters=cluster_number, max_iter=300, random_state=1)
     kmeans.fit(df_num_scaled)
     labels = kmeans.labels_
