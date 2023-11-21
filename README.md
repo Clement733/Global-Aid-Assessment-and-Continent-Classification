@@ -1,7 +1,11 @@
-🌍 Introducing "Global Aid Assessment and Continent Classification" Project! 🌟
+# Global Aid Assessment and Continent Classification 🌍
 
-Embark on a thrilling journey through my data-driven exploration of worldwide challenges and opportunities! 🚀 In the first branch, I wield cutting-edge 🌐 clustering techniques to unveil which countries need international aid urgently. Armed with a dynamic dataset spanning GDPP, health, child mortality, and more, I categorize nations into groups: those in dire need, those ripe for support, and those self-sustaining. 🌱
+⛑️ A step-by-step guide for assessing aid to countries in need with some prediction. 🔍
 
-Switching gears in the second branch, I plunge into the world of classification! 🤖 By crafting predictive models, I unveil the continents each country calls home. Using the same rich dataset, I unearth patterns and relationships, creating precise classifiers that showcase the magic of machine learning in decoding geographical patterns based on socio-economic data. 📊
+    Author: Clément Cipriani
+    Date: October, 2023
+    Dataset: https://www.kaggle.com/datasets/rohan0301/unsupervised-learning-on-country-data
 
-🔍 Ultimately, "Global Aid Assessment and Continent Classification" strives to illuminate the myriad challenges and opportunities faced by countries worldwide. Merging clustering and classification techniques, this project paints a vibrant portrait of our global community. It's not just about aid; it's about understanding where our efforts can make the most impact and gaining insights into the factors that shape continents. 🌐💡
+👋 Introduction
+
+🌍 Presenting the "Global Aid Assessment and Continent Classification" Project! 🌟 Embark on a data-driven journey exploring worldwide challenges and opportunities. In the first branch, cutting-edge 🌐 clustering techniques categorize countries based on urgent international aid needs, utilizing a dynamic dataset covering GDPP, health, child mortality, and more. The classification branch delves into predicting continents for each country, unveiling patterns and relationships in socio-economic data through precise classifiers. 🔍 Ultimately, this project illuminates global challenges, guiding impactful aid efforts and providing insights into continent-shaping factors. 🌐💡
